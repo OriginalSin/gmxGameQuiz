@@ -1,0 +1,57 @@
+<div class="TreeView">
+	<LineNode on:fitBounds="fitBounds1(event)" line={rawTree} />
+</div>
+ 
+
+<style>
+</style>
+
+<script>
+	import LineNode from './LineNode.html';
+	export default {
+		data() {
+			return {
+				group: null,
+				container: null,
+				rawTree: null
+			}
+		},
+		// events: {
+			// fitBounds(node, callback) {
+// console.log('TreeView fitBoundsfitBounds', node, callback);
+			// }
+		// },
+
+		// oncreate() {
+// console.log('_initTree', LineNode); // true
+		// },
+		methods: {
+			createMap(it) {
+			},
+			fitBounds1(props) {
+				console.log('TreeView fitBounds', props); // true
+				//this.fire('fitBounds', {layerID: props.layerID});
+			},
+			_initTree(it) {
+console.log('_initTree', it); // true
+			}
+		},
+		components: {
+			LineNode
+		},
+		// oncreate() {
+				// this.fire('foo', {ggg: 'ddddddddd'});
+			
+		// },
+
+		onstate({ changed, current, previous }) {
+console.log('TreeView in onstate', changed, current, previous);
+			if (changed.rawTree && current.rawTree) {
+				console.log('kjkkkkkkkkkkk in onstate', changed, current, previous);
+				// this.createMap(current.permalink);
+				//this.getPermalink(current.urlParams.config)
+			}
+		}
+	}
+
+</script>

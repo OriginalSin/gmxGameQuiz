@@ -1,0 +1,88 @@
+<div id="map"></div>
+
+<style>
+
+</style>
+
+<script>
+	const serverBase = window.serverBase || '//maps.kosmosnimki.ru/';
+
+	export default {
+		data() {
+			return {
+				layerGame: null,
+				questions: null,
+				permalink: null,
+				map: null
+			}
+		},
+		methods: {
+			styleHook(it) {
+				let {question} = this.get();
+				return question && it.id === question.id ? {} : null;
+			},
+			createMap(it) {
+				let app = it.app || {},
+					gmxMap = app.gmxMap || {},
+					state = it.state || {},
+					mapID = gmxMap.mapID || 'A557835E1B2344479C092FBB0158B529',
+					layerID = gmxMap.layerID || '5F2A707A119A45EF9BD490187E909830',
+					apiKey = gmxMap.apiKey,
+					pos = state.map ? state.map.position : {};
+
+				var osm = L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png', {
+					maxZoom: 18
+				});
+
+				let map = new L.Map('map', {
+					layers: [osm],
+					center: new L.LatLng(pos.y || 26, pos.x || 83),
+					zoom: pos.z || 7
+				});
+
+				map.gmxControlsManager.init();
+				
+				L.gmx.loadMap(mapID, {leafletMap: map}).then(function(gmxMap) {
+					gmxMap.layers.forEach(function(it) {
+						map.removeLayer(it);
+					});
+					let layerGame = gmxMap.layersByID[layerID] || gmxMap.layers[0];
+					if (layerGame) {
+						this.set({layerGame: layerGame});
+						let dm = layerGame.getDataManager();
+						let ob = dm.addObserver({
+							type: 'resend',
+							layerID: layerID,
+							callback: function (data) {
+								if (data.count) {
+									this.set({questions: data});
+								}
+								console.log('data', data);
+							}.bind(this)
+						});
+						layerGame.setStyleHook(this.styleHook.bind(this));
+						map.addLayer(layerGame);
+					}
+					// console.log('gmxMap', gmxMap);
+				}.bind(this));
+				this.set({map: map});
+			}
+		},
+		// components: {
+			// Confirm
+		// },
+		onupdate({ changed, current, previous }) {
+			// this fires after oncreate, and after every state change
+			// once the DOM is synchronised with the data
+// console.log(`Ma55ppppp The DOM has been updated`, changed, current, previous);
+		},
+		
+		onstate({ changed, current, previous }) {
+// console.log('Map in onstate', changed, current, previous);
+			if (changed.permalink && current.permalink) {
+				this.createMap(current.permalink);
+				//this.getPermalink(current.urlParams.config)
+			}
+		}
+	}
+</script>

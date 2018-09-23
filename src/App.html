@@ -1,0 +1,210 @@
+<Map permalink={permalink} bind:layerGame bind:questCount bind:questions bind:question  />
+{#if !questCount}
+	<div class="scrim"></div>
+	<div class="controls">
+	{#if !layerGame}
+		<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+	{:else}
+		<h1 class="title">{props.title}</h1>
+		<p class="description">{props.description}</p>
+		<button class="start" on:click="nextQuestion({questCount: 10})">Начать</button>
+	{/if}
+	</div>
+{:else}
+	<div class="question">
+	{question ? question.properties[1] : ''}
+	</div>
+{/if}
+
+<script>
+	const serverBase = window.serverBase || '//maps.kosmosnimki.ru/';
+	import Map from './Map.html';
+	export default {
+		data() {
+			return {
+				urlParams: {},
+				props: {},
+				dropdownMenu: [
+					{ name: 'refresh', title: 'Refresh' },
+					{ name: 'link', title: 'Share' },
+					{ name: 'magic', title: 'Wizard' }
+				],
+				map: null,
+				permalink: null,
+				questCount: 0
+			}
+		},
+		computed: {
+			props: ({ layerGame }) => layerGame ? layerGame.getGmxProperties() : {},
+		},
+		methods: {
+			nextQuestion() {
+				let {questions} = this.get(),
+					len = questions.added.length,
+					it = questions.added[Math.floor(len * Math.random())];
+				this.set({questCount: 10, question: it})
+console.log('startGame', it);
+			},
+			test(node, flag) {
+// console.log('editTrigger', node, flag);
+				let parentNode = node.parentNode,
+					lastChild = parentNode.parentNode.lastChild;
+				if (flag) {
+					lastChild.previousElementSibling.classList.remove('hidden');
+					lastChild.classList.add('hidden');
+				} else {
+					lastChild.previousElementSibling.classList.add('hidden');
+					lastChild.classList.remove('hidden');
+				}
+				parentNode.firstChild.classList.remove('checked');
+				parentNode.lastChild.classList.remove('checked');
+				node.classList.add('checked');
+			},
+			getPermalink(id) {
+				return fetch(serverBase + 'TinyReference/Get.ashx?WrapStyle=None&id=' + id, {
+						mode: 'cors',
+						credentials: 'include'
+					})
+					.then(res => res.json())
+					.then(json => {
+						if (json.Status === 'ok') {
+							let out = json.Result ? JSON.parse(json.Result) : {};
+							this.set({permalink: out, confStr: JSON.stringify(out, null, 2)});
+						}
+// console.log('TinyReference ____ ', json);
+					});
+					// .catch(err => console.log(err));
+			}
+		},
+
+		components: {
+			Map
+		},
+
+		oncreate() {
+			// this fires when the component has been
+			// rendered to the DOM
+			// console.log('in oncreate');
+			
+		},
+
+		onstate({ changed, current, previous }) {
+// console.log('in onstate', changed, current, previous);
+			if (changed.urlParams) {
+				this.getPermalink(current.urlParams.config)
+			}
+		},
+
+		onupdate({ changed, current, previous }) {
+			// console.log('in onupdate', changed, current, previous);
+			if (changed.confStr) {
+				// let node = document.getElementsByClassName('view')[0];
+				// node.innerHTML = current.confStr;
+				// hljs.highlightBlock(node);
+			}
+		}
+	}
+</script>
+
+<style>
+.question {
+	position: absolute;
+    margin: 10px;
+    right: 0;
+    top: 0;
+	z-index: 1000;
+	background-color: #ffffff;
+	padding: 13px;
+	border-radius: 5px;
+	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+}
+.controls {
+	position: absolute;
+    margin: 80px;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+	z-index: 1000;
+	background-color: #ffffff;
+	padding: 13px;
+	border-radius: 5px;
+	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+}
+
+.slider {
+	width: 300px;
+}
+.timeInfo {
+	text-align: center;
+	padding-top: 12px;
+}
+.auto {
+	display: none;
+}
+.scrim {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 100vh;
+}
+.lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 64px;
+  height: 47px;
+}
+.lds-ellipsis div {
+  position: absolute;
+  top: 20px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #70cbe0;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+.lds-ellipsis div:nth-child(1) {
+  left: 6px;
+  animation: lds-ellipsis1 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(2) {
+  left: 6px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(3) {
+  left: 26px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(4) {
+  left: 45px;
+  animation: lds-ellipsis3 0.6s infinite;
+}
+@keyframes lds-ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lds-ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+@keyframes lds-ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(19px, 0);
+  }
+}
+
+</style>
