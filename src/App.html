@@ -12,6 +12,9 @@
 		<h1 class="title">{props.title}</h1>
 		<p class="description">{props.description}</p>
 		<button class="start" on:click="nextQuestion()">Начать</button>
+		{#if props.MetaProperties.video && props.MetaProperties.video.Value}
+			<div><iframe title="video" width="100%" height="315" src="{props.MetaProperties.video.Value}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+		{/if}
 		{#if score[props.name]}
 			<ul>
 			{#each score[props.name] as it}
@@ -35,7 +38,7 @@
 			}
 		},
 		computed: {
-			props: ({ layerGame }) => layerGame ? layerGame.getGmxProperties() : {},
+			props: ({ layerGame }) => layerGame ? layerGame.getGmxProperties() : {}
 		},
 		methods: {
 			nextQuestion(sc) {
