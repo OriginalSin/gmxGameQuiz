@@ -19,15 +19,96 @@
 		methods: {
 			styleHook(it) {
 				let {question} = this.get();
-				return question && it.id === question.id ? {} : null;
+				return question && this.polyline && it.id === question.id ? {} : null;
+			},
+			setLayerGame(layerID) {
+				let layerGame = this.gmxMap.layersByID[layerID] ||
+					this.gmxMap.layers[Math.floor(this.gmxMap.layers.length * Math.random())];
+
+				if (layerGame) {
+					let dm = layerGame.getDataManager(),
+						props = layerGame.getGmxProperties(),
+						meta = props.MetaProperties,
+						count = meta.count ? Number(meta.count.Value) : 10,
+						layerID = props.name;
+					let ob = dm.addObserver({
+						type: 'resend',
+						layerID: layerID,
+						callback: function (data) {
+							if (data.count) {
+								this.set({questions: data.added.sort(Math.random).slice(0, count)});
+								ob.deactivate();
+							}
+							// console.log('data', data);
+						}.bind(this)
+					});
+					layerGame.setStyleHook(this.styleHook.bind(this));
+					this.map.addLayer(layerGame);
+					let st = localStorage.getItem('_gameQuiz_');
+					let score = st ? JSON.parse(st) : {};
+					this.set({layerGame: layerGame, score: score});
+				}
+			},
+			showQuestionResult(ev) {
+				if (this.polyline) { this.map.removeLayer(this.polyline); }
+				let {question} = this.get(),
+					bounds = question.dataOption.bounds.toLatLngBounds(true),
+					center = bounds.getCenter(),
+					isContains = bounds.contains(this._latlng),
+					polyline = L.polyline([center, this._latlng], {color: 'red'}).addTo(this.map);
+				this.map.fitBounds(polyline.getBounds());
+				let geoJson = polyline.toGeoJSON().geometry;
+
+				this.polyline = polyline;
+				this.setPopupContent(geoJson, isContains);
+				// console.log('showQuestionResult', this._latlng, question);
+			},
+			nextQuestion() {
+				this.map.closePopup();
+				this.map.removeLayer(this.polyline);
+				this.polyline = null;
+				this.root.nextQuestion(this.sc);
+			},
+			setPopupContent(geoJson, isContains) {
+				let node = L.DomUtil.create('div', ''),
+					txt = L.DomUtil.create('div', '', node),
+					button = L.DomUtil.create('button', '', node);
+				if (geoJson) {
+					let len = L.gmxUtil.geoJSONGetLength(geoJson),
+						strLen = L.gmxUtil.getGeoJSONSummary(geoJson),
+						sc = 0;
+					if (isContains) {
+						sc = 10;
+						txt.innerHTML = 'Отлично вам начислено: <b>' + sc + '</b> баллов';
+					} else {
+						txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
+					}
+					this.sc = sc;
+					button.innerHTML = 'Следующий вопрос';
+					L.DomEvent.on(button, 'click', this.nextQuestion, this);
+				} else {
+					txt.innerHTML = 'Я считаю что это здесь!';
+					button.innerHTML = 'Показать';
+					L.DomEvent.on(button, 'click', this.showQuestionResult, this);
+				}
+
+				this.popup.setContent(node);
+				this.popupContent = node;
+			},
+			clickMap(ev) {
+				this.map.closePopup();
+				this._latlng = ev.latlng;
+				this.popup = L.popup()
+					.setLatLng(this._latlng);
+
+				this.setPopupContent();
+				this.map.openPopup(this.popup);
 			},
 			createMap(it) {
-				let app = it.app || {},
-					gmxMap = app.gmxMap || {},
-					state = it.state || {},
-					mapID = gmxMap.mapID || 'A557835E1B2344479C092FBB0158B529',
-					layerID = gmxMap.layerID || '5F2A707A119A45EF9BD490187E909830',
-					apiKey = gmxMap.apiKey,
+				let state = it.state || {},
+					mapID = it.mapID || 'A557835E1B2344479C092FBB0158B529',
+					layerID = it.layerID || '', //'5F2A707A119A45EF9BD490187E909830',
+					apiKey = it.apiKey,
 					pos = state.map ? state.map.position : {};
 
 				var osm = L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png', {
@@ -38,7 +119,7 @@
 					layers: [osm],
 					center: new L.LatLng(pos.y || 26, pos.x || 83),
 					zoom: pos.z || 7
-				});
+				}).on('click', this.clickMap.bind(this), this);
 
 				map.gmxControlsManager.init();
 				
@@ -46,26 +127,12 @@
 					gmxMap.layers.forEach(function(it) {
 						map.removeLayer(it);
 					});
-					let layerGame = gmxMap.layersByID[layerID] || gmxMap.layers[0];
-					if (layerGame) {
-						this.set({layerGame: layerGame});
-						let dm = layerGame.getDataManager();
-						let ob = dm.addObserver({
-							type: 'resend',
-							layerID: layerID,
-							callback: function (data) {
-								if (data.count) {
-									this.set({questions: data});
-								}
-								console.log('data', data);
-							}.bind(this)
-						});
-						layerGame.setStyleHook(this.styleHook.bind(this));
-						map.addLayer(layerGame);
-					}
+					this.gmxMap = gmxMap;
+					this.setLayerGame(layerID);
 					// console.log('gmxMap', gmxMap);
 				}.bind(this));
-				this.set({map: map});
+				this.map = map;
+
 			}
 		},
 		// components: {
@@ -76,11 +143,13 @@
 			// once the DOM is synchronised with the data
 // console.log(`Ma55ppppp The DOM has been updated`, changed, current, previous);
 		},
-		
+		oncreate() {
+			let {urlParams} = this.get();
+			this.createMap(urlParams);
+		},
 		onstate({ changed, current, previous }) {
 // console.log('Map in onstate', changed, current, previous);
-			if (changed.permalink && current.permalink) {
-				this.createMap(current.permalink);
+			if (changed.urlParams && current.urlParams) {
 				//this.getPermalink(current.urlParams.config)
 			}
 		}

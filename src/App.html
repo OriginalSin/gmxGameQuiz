@@ -1,5 +1,9 @@
-<Map permalink={permalink} bind:layerGame bind:questCount bind:questions bind:question  />
-{#if !questCount}
+<Map urlParams={urlParams} bind:layerGame bind:score bind:questions bind:question  />
+{#if question}
+	<div class="question">
+		{question ? question.properties[1] : ''}
+	</div>
+{:else}
 	<div class="scrim"></div>
 	<div class="controls">
 	{#if !layerGame}
@@ -7,12 +11,15 @@
 	{:else}
 		<h1 class="title">{props.title}</h1>
 		<p class="description">{props.description}</p>
-		<button class="start" on:click="nextQuestion({questCount: 10})">Начать</button>
+		<button class="start" on:click="nextQuestion()">Начать</button>
+		{#if score[props.name]}
+			<ul>
+			{#each score[props.name] as it}
+			<li>{it} баллов</li>
+			{/each}
+			</ul>
+		{/if}
 	{/if}
-	</div>
-{:else}
-	<div class="question">
-	{question ? question.properties[1] : ''}
 	</div>
 {/if}
 
@@ -24,84 +31,33 @@
 			return {
 				urlParams: {},
 				props: {},
-				dropdownMenu: [
-					{ name: 'refresh', title: 'Refresh' },
-					{ name: 'link', title: 'Share' },
-					{ name: 'magic', title: 'Wizard' }
-				],
-				map: null,
-				permalink: null,
-				questCount: 0
+				score: null
 			}
 		},
 		computed: {
 			props: ({ layerGame }) => layerGame ? layerGame.getGmxProperties() : {},
 		},
 		methods: {
-			nextQuestion() {
-				let {questions} = this.get(),
-					len = questions.added.length,
-					it = questions.added[Math.floor(len * Math.random())];
-				this.set({questCount: 10, question: it})
-console.log('startGame', it);
-			},
-			test(node, flag) {
-// console.log('editTrigger', node, flag);
-				let parentNode = node.parentNode,
-					lastChild = parentNode.parentNode.lastChild;
-				if (flag) {
-					lastChild.previousElementSibling.classList.remove('hidden');
-					lastChild.classList.add('hidden');
-				} else {
-					lastChild.previousElementSibling.classList.add('hidden');
-					lastChild.classList.remove('hidden');
+			nextQuestion(sc) {
+				let {questions, props, score} = this.get(),
+					question = questions.shift();
+				this.sc = this.sc || 0;
+				this.sc += (sc || 0);
+				if (!question) {
+					score = score || {};
+					let id = props.name,
+						arr = score[id] || [];
+					arr.push(this.sc);
+					score[id] = arr;
+					window.localStorage.setItem('_gameQuiz_', JSON.stringify(score));
 				}
-				parentNode.firstChild.classList.remove('checked');
-				parentNode.lastChild.classList.remove('checked');
-				node.classList.add('checked');
-			},
-			getPermalink(id) {
-				return fetch(serverBase + 'TinyReference/Get.ashx?WrapStyle=None&id=' + id, {
-						mode: 'cors',
-						credentials: 'include'
-					})
-					.then(res => res.json())
-					.then(json => {
-						if (json.Status === 'ok') {
-							let out = json.Result ? JSON.parse(json.Result) : {};
-							this.set({permalink: out, confStr: JSON.stringify(out, null, 2)});
-						}
-// console.log('TinyReference ____ ', json);
-					});
-					// .catch(err => console.log(err));
+				this.set({questions: questions, question: question})
+				// console.log('startGame', question, questions.length);
 			}
 		},
 
 		components: {
 			Map
-		},
-
-		oncreate() {
-			// this fires when the component has been
-			// rendered to the DOM
-			// console.log('in oncreate');
-			
-		},
-
-		onstate({ changed, current, previous }) {
-// console.log('in onstate', changed, current, previous);
-			if (changed.urlParams) {
-				this.getPermalink(current.urlParams.config)
-			}
-		},
-
-		onupdate({ changed, current, previous }) {
-			// console.log('in onupdate', changed, current, previous);
-			if (changed.confStr) {
-				// let node = document.getElementsByClassName('view')[0];
-				// node.innerHTML = current.confStr;
-				// hljs.highlightBlock(node);
-			}
 		}
 	}
 </script>
@@ -117,6 +73,7 @@ console.log('startGame', it);
 	padding: 13px;
 	border-radius: 5px;
 	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+	font-weight: bold;
 }
 .controls {
 	position: absolute;

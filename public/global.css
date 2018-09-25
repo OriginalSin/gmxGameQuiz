@@ -3,7 +3,9 @@ html, body, #map {
 	width: 100%;
 	margin: 0px;
 }
-
+.leaflet-popup-content {
+    font-size: large;
+}
 @font-face {
   font-family: 'fontello';
   src: url('font/fontello.eot?2f1ce1');
