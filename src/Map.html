@@ -22,6 +22,21 @@
 				let {question} = this.get();
 				return question && this.polyline && it.id === question.id ? {} : null;
 			},
+			getSections(arr, layerGame) {
+				let attrIndexes = layerGame.getTileAttributeIndexes(),
+					sections = null;
+				if (attrIndexes.section) {
+					let props = layerGame.getGmxProperties();
+					sections = {};
+					arr.forEach(function(it) {
+						let propsArr = it.properties,
+							key = propsArr[attrIndexes.section];
+						sections[key] = true;
+					});
+					// console.log('setSections', arr, props);
+				}
+				this.set({sectionsList: sections});
+			},
 			setLayerGame(layerID) {
 				let layerGame = this.gmxMap.layersByID[layerID] ||
 					this.gmxMap.layers[Math.floor(this.gmxMap.layers.length * Math.random())];
@@ -37,6 +52,7 @@
 						layerID: layerID,
 						callback: function (data) {
 							if (data.count) {
+								this.getSections(data.added, layerGame);
 								this.set({questions: data.added.sort(Math.random).slice(0, count)});
 								ob.deactivate();
 							}
@@ -124,6 +140,7 @@
 				});
 
 				let map = new L.Map('map', {
+					generalized: false,
 					layers: [osm],
 					center: new L.LatLng(pos.y || 26, pos.x || 83),
 					zoom: pos.z || 7
@@ -148,6 +165,7 @@
 							title: props.title,
 							layerID: props.name
 						});
+						it._gameZoom = metaHash.zoom || 3;
 					});
 					this.quizList = arr;
 					this.gmxMap = gmxMap;
@@ -174,6 +192,9 @@
 				this.set({quizList: this.quizList});
 			} else if (changed.layerID && current.layerID) {
 				this.setLayerGame(current.layerID);
+			} else if (changed.question && current.question) {
+				let {layerGame} = this.get();
+				this.map.setZoom(layerGame._gameZoom);
 			}
 		}
 	}
