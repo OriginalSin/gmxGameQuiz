@@ -11,6 +11,7 @@
 		data() {
 			return {
 				layerGame: null,
+				quizList: null,
 				questions: null,
 				permalink: null,
 				map: null
@@ -76,13 +77,18 @@
 				if (geoJson) {
 					let len = L.gmxUtil.geoJSONGetLength(geoJson),
 						strLen = L.gmxUtil.getGeoJSONSummary(geoJson),
+						resultQuestion = {},
 						sc = 0;
 					if (isContains) {
 						sc = 10;
 						txt.innerHTML = 'Отлично вам начислено: <b>' + sc + '</b> баллов';
+						resultQuestion.ok = sc + ' баллов';
 					} else {
 						txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
+						resultQuestion.len = strLen;
 					}
+					this.set({resultQuestion: resultQuestion});
+					
 					this.sc = sc;
 					button.innerHTML = 'Следующий вопрос';
 					L.DomEvent.on(button, 'click', this.nextQuestion, this);
@@ -104,6 +110,8 @@
 				this.setPopupContent();
 				this.map.openPopup(this.popup);
 			},
+			setQuizList() {
+			},
 			createMap(it) {
 				let state = it.state || {},
 					mapID = it.mapID || 'A557835E1B2344479C092FBB0158B529',
@@ -123,34 +131,49 @@
 
 				map.gmxControlsManager.init();
 				
+				let arr = [];
 				L.gmx.loadMap(mapID, {leafletMap: map}).then(function(gmxMap) {
 					gmxMap.layers.forEach(function(it) {
 						map.removeLayer(it);
+						let props = it.getGmxProperties(),
+							meta = props.MetaProperties,
+							metaHash = {};
+						for(let key in meta) {
+							let val = meta[key].Value;
+							metaHash[key] = val > 0 ? Number(val) : val;
+						}
+						arr.push({
+							gmxLayer: it,
+							metaHash: metaHash,
+							title: props.title,
+							layerID: props.name
+						});
 					});
+					this.quizList = arr;
 					this.gmxMap = gmxMap;
-					this.setLayerGame(layerID);
+					if (layerID) {
+						this.setLayerGame(layerID);
+					} else {
+						this.set({quizList: this.quizList});
+					}
 					// console.log('gmxMap', gmxMap);
 				}.bind(this));
 				this.map = map;
-
 			}
-		},
-		// components: {
-			// Confirm
-		// },
-		onupdate({ changed, current, previous }) {
-			// this fires after oncreate, and after every state change
-			// once the DOM is synchronised with the data
-// console.log(`Ma55ppppp The DOM has been updated`, changed, current, previous);
 		},
 		oncreate() {
 			let {urlParams} = this.get();
 			this.createMap(urlParams);
 		},
+
 		onstate({ changed, current, previous }) {
-// console.log('Map in onstate', changed, current, previous);
-			if (changed.urlParams && current.urlParams) {
-				//this.getPermalink(current.urlParams.config)
+			// console.log('in onstate', this);
+			if (changed.selectQuiz && current.selectQuiz) {
+				this.map.closePopup();
+				if (this.polyline) { this.map.removeLayer(this.polyline); this.polyline = null; }
+				this.set({quizList: this.quizList});
+			} else if (changed.layerID && current.layerID) {
+				this.setLayerGame(current.layerID);
 			}
 		}
 	}

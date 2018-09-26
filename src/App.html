@@ -1,17 +1,41 @@
-<Map urlParams={urlParams} bind:layerGame bind:score bind:questions bind:question  />
+<Map urlParams={urlParams}
+	bind:selectQuiz
+	bind:quizList
+	bind:layerID
+	bind:layerGame
+	bind:score
+	bind:questions
+	bind:question
+	bind:resultQuestion
+/>
 {#if question}
 	<div class="question">
 		{question ? question.properties[1] : ''}
+		{#if resultQuestion}
+			<div class="question-result">
+				({resultQuestion.len || ''}{resultQuestion.ok || ''})
+			</div>
+			<button class="start" on:click="nextQuestion()">Продолжить</button>
+			<button class="start" on:click="set({selectQuiz: true, question: false})">Выбрать игру</button>
+		{/if}
 	</div>
 {:else}
 	<div class="scrim"></div>
 	<div class="controls">
-	{#if !layerGame}
+	{#if quizList}
+		<h1 class="title">Выбрать игру</h1>
+		<ul class="selectQuiz">
+		{#each quizList as it}
+			<li on:click="set({layerID: it.layerID, selectQuiz: false, quizList: false})">{it.title}</li>
+		{/each}
+		</ul>
+	{:elseif !layerGame}
 		<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
 	{:else}
 		<h1 class="title">{props.title}</h1>
 		<p class="description">{props.description}</p>
 		<button class="start" on:click="nextQuestion()">Начать</button>
+		<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
 		{#if props.MetaProperties.video && props.MetaProperties.video.Value}
 			<div><iframe title="video" width="100%" height="315" src="{props.MetaProperties.video.Value}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
 		{/if}
@@ -33,6 +57,8 @@
 		data() {
 			return {
 				urlParams: {},
+				quizList: null,
+				selectQuiz: null,
 				props: {},
 				score: null
 			}
@@ -41,6 +67,8 @@
 			props: ({ layerGame }) => layerGame ? layerGame.getGmxProperties() : {}
 		},
 		methods: {
+			selectGame() {
+			},
 			nextQuestion(sc) {
 				let {questions, props, score} = this.get(),
 					question = questions.shift();
@@ -54,13 +82,20 @@
 					score[id] = arr;
 					window.localStorage.setItem('_gameQuiz_', JSON.stringify(score));
 				}
-				this.set({questions: questions, question: question})
+				this.set({questions: questions, question: question, resultQuestion: false})
 				// console.log('startGame', question, questions.length);
 			}
 		},
 
 		components: {
 			Map
+		},
+
+		onstate({ changed, current, previous }) {
+			// console.log('in onstate', this);
+			// if (changed.quizList && current.quizList) {
+				// this.set({quizList: this.gmxMap.layers});
+			// }
 		}
 	}
 </script>
@@ -92,16 +127,10 @@
 	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
 }
 
-.slider {
-	width: 300px;
+.selectQuiz {
+	cursor: pointer;
 }
-.timeInfo {
-	text-align: center;
-	padding-top: 12px;
-}
-.auto {
-	display: none;
-}
+
 .scrim {
   position: fixed;
   z-index: 1000;
