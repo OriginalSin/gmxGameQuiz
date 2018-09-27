@@ -45,7 +45,9 @@
 		{/if}
 
 		<button class="start" disabled="{isSectionsEmpty}" on:click="nextQuestion()">Начать</button>
-		<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
+		{#if !sectionsList}
+			<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
+		{/if}
 		{#if props.MetaProperties.video && props.MetaProperties.video.Value}
 			<div><iframe title="video" width="100%" height="315" src="{props.MetaProperties.video.Value}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
 		{/if}
@@ -88,7 +90,7 @@
 		},
 		methods: {
 			checkSection(key, flag) {
-				console.log('checkSection', key, flag);
+				// console.log('checkSection', key, flag);
 				let {sectionsList} = this.get();
 				sectionsList[key] = flag;
 				this.set({sectionsList: sectionsList});
@@ -103,11 +105,12 @@
 					let id = props.name,
 						arr = score[id] || [];
 					arr.push(this.sc);
-					score[id] = arr;
+					let len = arr.length;
+					score[id] = arr.slice(len - 5, len);
 					window.localStorage.setItem('_gameQuiz_', JSON.stringify(score));
 				}
 				this.set({questions: questions, question: question, resultQuestion: false});
-				// console.log('startGame', question, questions.length);
+// console.log('startGame', question, questions);
 			}
 		},
 

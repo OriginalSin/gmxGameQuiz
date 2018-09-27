@@ -24,18 +24,39 @@
 			},
 			getSections(arr, layerGame) {
 				let attrIndexes = layerGame.getTileAttributeIndexes(),
+					props = layerGame.getGmxProperties(),
+					meta = props.MetaProperties,
+					count = meta.count ? Number(meta.count.Value) : 10,
 					sections = null;
 				if (attrIndexes.section) {
-					let props = layerGame.getGmxProperties();
 					sections = {};
 					arr.forEach(function(it) {
 						let propsArr = it.properties,
 							key = propsArr[attrIndexes.section];
 						sections[key] = true;
 					});
-					// console.log('setSections', arr, props);
 				}
+				this.allData = arr;
+				// this.set({questions: arr.sort(Math.random).slice(0, count)});
 				this.set({sectionsList: sections});
+			},
+			reBuildQuestions(sectionsList) {
+				let {layerGame} = this.get(),
+					props = layerGame.getGmxProperties(),
+					meta = props.MetaProperties,
+					count = meta.count ? Number(meta.count.Value) : 10,
+					attrIndexes = layerGame.getTileAttributeIndexes(),
+					arr = [];
+				this.allData.forEach(function(it) {
+					let propsArr = it.properties,
+						key = propsArr[attrIndexes.section];
+					if (sectionsList[key]) {
+						arr.push(it);
+					}
+				});
+				arr = arr.sort(Math.random).slice(0, count);
+				this.set({questions: arr});
+// console.log('reBuildQuestions', this.allData.length, sectionsList, arr);
 			},
 			setLayerGame(layerID) {
 				let layerGame = this.gmxMap.layersByID[layerID] ||
@@ -44,8 +65,8 @@
 				if (layerGame) {
 					let dm = layerGame.getDataManager(),
 						props = layerGame.getGmxProperties(),
-						meta = props.MetaProperties,
-						count = meta.count ? Number(meta.count.Value) : 10,
+						// meta = props.MetaProperties,
+						// count = meta.count ? Number(meta.count.Value) : 10,
 						layerID = props.name;
 					let ob = dm.addObserver({
 						type: 'resend',
@@ -53,10 +74,9 @@
 						callback: function (data) {
 							if (data.count) {
 								this.getSections(data.added, layerGame);
-								this.set({questions: data.added.sort(Math.random).slice(0, count)});
 								ob.deactivate();
 							}
-							// console.log('data', data);
+							 // console.log('data', data);
 						}.bind(this)
 					});
 					layerGame.setStyleHook(this.styleHook.bind(this));
@@ -140,6 +160,7 @@
 				});
 
 				let map = new L.Map('map', {
+					allWorld: true,
 					generalized: false,
 					layers: [osm],
 					center: new L.LatLng(pos.y || 26, pos.x || 83),
@@ -195,6 +216,8 @@
 			} else if (changed.question && current.question) {
 				let {layerGame} = this.get();
 				this.map.setZoom(layerGame._gameZoom);
+			} else if (changed.sectionsList && current.sectionsList) {
+				this.reBuildQuestions(current.sectionsList);
 			}
 		}
 	}
