@@ -107,6 +107,7 @@
 				this.root.nextQuestion(this.sc);
 			},
 			setPopupContent(geoJson, isContains) {
+				let {question} = this.get();
 				let node = L.DomUtil.create('div', ''),
 					txt = L.DomUtil.create('div', '', node),
 					button = L.DomUtil.create('button', '', node);
@@ -122,6 +123,7 @@
 					} else {
 						txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
 					}
+					resultQuestion.question = question;
 					resultQuestion.len = len;
 					resultQuestion.strLen = strLen;
 					this.set({resultQuestion: resultQuestion});

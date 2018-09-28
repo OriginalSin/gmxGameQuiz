@@ -17,14 +17,15 @@
 			<div class="question-result">
 				<ul>
 				{#each currentScore as it}
-					<li>{it.strLen}</li>
+					<li>{it.question.properties[1]}: <b>{it.strLen}</b></li>
 				{/each}
 				</ul>
 				<hr />
-				Всего: {currentItog}
+				Общий результат: {currentItog}
 			</div>
+			<br>
 			<button class="start" on:click="nextQuestion()">Продолжить</button>
-			<button class="start" on:click="set({selectQuiz: true, question: false})">Выбрать игру</button>
+			<button class="start" on:click="set({question: false})">Выбрать игру</button>
 		{/if}
 	</div>
 {:else}
@@ -153,6 +154,10 @@
 	border-radius: 5px;
 	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
 	font-weight: bold;
+}
+.question li {
+	font-weight: initial;
+    list-style-type: decimal;
 }
 .controls {
 	position: absolute;
