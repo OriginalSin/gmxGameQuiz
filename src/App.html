@@ -13,8 +13,15 @@
 	<div class="question">
 		{question ? question.properties[1] : ''}
 		{#if resultQuestion}
+			<hr />
 			<div class="question-result">
-				({resultQuestion.len || ''}{resultQuestion.ok || ''})
+				<ul>
+				{#each currentScore as it}
+					<li>{it.strLen}</li>
+				{/each}
+				</ul>
+				<hr />
+				Всего: {currentItog}
 			</div>
 			<button class="start" on:click="nextQuestion()">Продолжить</button>
 			<button class="start" on:click="set({selectQuiz: true, question: false})">Выбрать игру</button>
@@ -44,7 +51,7 @@
 			</ul>
 		{/if}
 
-		<button class="start" disabled="{isSectionsEmpty}" on:click="nextQuestion()">Начать</button>
+		<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать</button>
 		{#if !sectionsList}
 			<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
 		{/if}
@@ -72,11 +79,13 @@
 				quizList: null,
 				selectQuiz: null,
 				props: {},
+				currentScore: [],
 				score: null
 			}
 		},
 		computed: {
 			props: ({ layerGame }) => layerGame ? layerGame.getGmxProperties() : {},
+			currentItog: ({ currentScore }) => L.gmxUtil.prettifyDistance(currentScore.reduce((p, c) => p + c.len, 0)),
 			isSectionsEmpty: ({ sectionsList }) => {
 				let res = false;
 				if (sectionsList) {
@@ -95,8 +104,11 @@
 				sectionsList[key] = flag;
 				this.set({sectionsList: sectionsList});
 			},
-			nextQuestion(sc) {
-				let {questions, props, score} = this.get(),
+			start() {
+				this.nextQuestion(0, true);
+			},
+			nextQuestion(sc, clearCurrentScore) {
+				let {questions, props, score, currentScore} = this.get(),
 					question = questions.shift();
 				this.sc = this.sc || 0;
 				this.sc += (sc || 0);
@@ -109,8 +121,8 @@
 					score[id] = arr.slice(len - 5, len);
 					window.localStorage.setItem('_gameQuiz_', JSON.stringify(score));
 				}
-				this.set({questions: questions, question: question, resultQuestion: false});
-// console.log('startGame', question, questions);
+				if (clearCurrentScore) { currentScore = []; }
+				this.set({questions: questions, question: question, resultQuestion: false, currentScore: currentScore});
 			}
 		},
 
@@ -120,9 +132,11 @@
 
 		onstate({ changed, current, previous }) {
 			// console.log('in onstate', this);
-			// if (changed.quizList && current.quizList) {
-				// this.set({quizList: this.gmxMap.layers});
-			// }
+			if (changed.resultQuestion && current.resultQuestion) {
+				let {currentScore} = this.get();
+				currentScore.push(current.resultQuestion);
+				this.set({currentScore: currentScore});
+			}
 		}
 	}
 </script>

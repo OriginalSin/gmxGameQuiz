@@ -121,8 +121,9 @@
 						resultQuestion.ok = sc + ' баллов';
 					} else {
 						txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
-						resultQuestion.len = strLen;
 					}
+					resultQuestion.len = len;
+					resultQuestion.strLen = strLen;
 					this.set({resultQuestion: resultQuestion});
 					
 					this.sc = sc;
@@ -155,11 +156,18 @@
 					apiKey = it.apiKey,
 					pos = state.map ? state.map.position : {};
 
-				var osm = L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png', {
-					maxZoom: 18
-				});
+				var osm = it.base == 1 ? 
+					L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png', {
+                        attribution: '<a href="http://maps.sputnik.ru">Спутник</a> © Ростелеком | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+						maxZoom: 18
+					}) :
+					L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoia29zbW9zbmlta2kiLCJhIjoiY2lvbW1tNXN0MDAwdnc4bHg5ZWw2YXJtYSJ9.ON9Ovi3fuHc5RAipmLb2EQ', {
+						attribution: '&copy; <a href="//mapbox.com/">mapbox</a>',
+						maxZoom: 18
+					});
 
 				let map = new L.Map('map', {
+					attribution: '&copy; <a href="//scanex.ru/">scanex</a>',
 					allWorld: true,
 					generalized: false,
 					layers: [osm],
@@ -167,7 +175,7 @@
 					zoom: pos.z || 7
 				}).on('click', this.clickMap.bind(this), this);
 
-				map.gmxControlsManager.init();
+				// map.gmxControlsManager.init();
 				
 				let arr = [];
 				L.gmx.loadMap(mapID, {leafletMap: map}).then(function(gmxMap) {
@@ -215,6 +223,8 @@
 				this.setLayerGame(current.layerID);
 			} else if (changed.question && current.question) {
 				let {layerGame} = this.get();
+				this.map.closePopup();
+				if (this.polyline) { this.map.removeLayer(this.polyline); this.polyline = null; }
 				this.map.setZoom(layerGame._gameZoom);
 			} else if (changed.sectionsList && current.sectionsList) {
 				this.reBuildQuestions(current.sectionsList);

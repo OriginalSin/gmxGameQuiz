@@ -6,6 +6,9 @@ html, body, #map {
 .leaflet-popup-content {
     font-size: large;
 }
+.leaflet-popup-content div {
+    text-align: center;
+}
 @font-face {
   font-family: 'fontello';
   src: url('font/fontello.eot?2f1ce1');
