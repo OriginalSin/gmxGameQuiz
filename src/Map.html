@@ -98,7 +98,8 @@
 
 				this.polyline = polyline;
 				this.setPopupContent(geoJson, isContains);
-				// console.log('showQuestionResult', this._latlng, question);
+
+				console.log('showQuestionResult', this.song);
 			},
 			nextQuestion() {
 				this.map.closePopup();
@@ -120,8 +121,14 @@
 						sc = 10;
 						txt.innerHTML = 'Отлично вам начислено: <b>' + sc + '</b> баллов';
 						resultQuestion.ok = sc + ' баллов';
+						if (this.audioStarted) this.audio.stop(0);
+						this.audioStart(11.74689342403628, 3.82984126984127);
+						// this.audioStart(11.182312925170066, 0.31458049886621314);
 					} else {
 						txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
+						// this.audioStart(7.158798185941043, 0.20521541950113378);
+						this.audioStart(8.50453514739229, 0.20950113378684806);
+						
 					}
 					resultQuestion.question = question;
 					resultQuestion.len = len;
@@ -149,7 +156,28 @@
 				this.setPopupContent();
 				this.map.openPopup(this.popup);
 			},
-			setQuizList() {
+			audioStart(start, duration) {
+				if (this.sound) {
+					let audioCtx = new (window.AudioContext || window.webkitAudioContext)(),
+						source = audioCtx.createBufferSource(),
+						request = new XMLHttpRequest();
+					request.open('GET', 'mp3/audio.mp3', true);
+					request.responseType = 'arraybuffer';
+					request.onload = function() {
+						let audioData = request.response;
+						audioCtx.decodeAudioData(request.response, function(buffer) {
+							source.buffer = buffer;
+							source.start(audioCtx.currentTime + 1, start, duration);
+							source.connect(audioCtx.destination);
+							// source.loop = true;
+						  },
+
+						  function(e){ console.log("Error with decoding audio data" + e.err); }
+						);
+
+					}
+					request.send();
+				}
 			},
 			createMap(it) {
 				let state = it.state || {},
@@ -157,6 +185,8 @@
 					layerID = it.layerID || '', //'5F2A707A119A45EF9BD490187E909830',
 					apiKey = it.apiKey,
 					pos = state.map ? state.map.position : {};
+
+				this.sound = it.sound;
 
 				var osm = it.base == 1 ? 
 					L.tileLayer('//tilessputnik.ru/{z}/{x}/{y}.png', {

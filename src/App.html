@@ -51,7 +51,6 @@
 			{/each}
 			</ul>
 		{/if}
-
 		<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать</button>
 		{#if !sectionsList}
 			<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
