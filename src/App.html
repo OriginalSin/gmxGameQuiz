@@ -7,71 +7,76 @@
 	bind:score
 	bind:questions
 	bind:question
+	bind:point
+	bind:calc
+	bind:emotion
 	bind:resultQuestion
 />
-{#if question}
-	<div class="question">
-		{question ? question.properties[1] : ''}
-		{#if resultQuestion}
-			<hr />
-			<div class="question-result">
-				<ul>
-				{#each currentScore as it}
-					<li>{it.question.properties[1]}: <b>{it.strLen}</b></li>
-				{/each}
-				</ul>
-				<hr />
-				Общий результат: {currentItog}
-			</div>
-			<br>
-			<button class="start" on:click="nextQuestion()">Продолжить</button>
-			<button class="start" on:click="set({question: false})">Выбрать игру</button>
-		{/if}
-	</div>
-{:else}
-	<div class="scrim"></div>
-	<div class="controls">
-	{#if quizList}
-		<h1 class="title">Выбрать игру</h1>
-		<ul class="selectQuiz">
-		{#each quizList as it}
-			<li on:click="set({layerID: it.layerID, selectQuiz: false, quizList: false})">{it.title}</li>
-		{/each}
-		</ul>
-	{:elseif !layerGame}
-		<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-	{:else}
-		<div class="title">
-			<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать игру заново</button>
-		</div>
-		<div class="content">
-			<p class="description">{props.description}</p>
-			{#if sectionsList}
-				<h1 class="section">Рубрики</h1>
-				<ul class="selectSectionsList">
-				{#each Object.keys(sectionsList) as it}
-					<li><input on:change="checkSection(it, this.checked)" type="checkbox" checked/>{it}</li>
-				{/each}
-				</ul>
-			{/if}
-			<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать игру</button>
-			{#if !sectionsList}
-				<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
-			{/if}
-			{#if props.MetaProperties.video && props.MetaProperties.video.Value}
-				<div><iframe title="video" width="100%" height="315" src="{props.MetaProperties.video.Value}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
-			{/if}
-			{#if score[props.name]}
-				<ul>
-				{#each score[props.name] as it}
-				<li>{it} баллов</li>
-				{/each}
-				</ul>
-			{/if}
-		</div>
+{#if !question}
+<div class="scrim"></div>
+{/if}
+<div class="controls">
+	<div class="title bg">
+	{#if question}
+		<button class="start" disabled="{isSectionsEmpty}" on:click="set({question:''})">Начать игру заново</button>
 	{/if}
 	</div>
+	<div class="content">
+{#if quizList}
+		<h1 class="title">Добро пожаловать!</h1>
+		<p>Мы рады приветствовать вас в нашем интерактивном географическом квесте!
+	В этой игре мы предлагаем выбрать рубрики, в рамках воторых вам предстоит находить места на карте, зная только их названия. Думаете просто?
+		</p>
+		<button class="start" disabled="{isSectionsEmpty}" on:click="set({quizList: null, layerID: '124D910DFC294C03A882F8FBCE1AC4E4'})">Давайте проверим!</button>
+{:elseif question}
+		<div class="question">
+			{question ? question.properties[1] : ''}
+			{#if resultQuestion}
+				<div class="emotion">
+					<span class="emotionTitle">{emotion.title}</span>
+					<span class="emotionScore">{emotion.score}</span>
+				</div>
+				<button class="start" on:click="nextQuestion()">Следующий вопрос</button>
+				<hr />
+				<div class="question-result">
+					<ul>
+					{#each currentScore as it}
+						<li>{it.question.properties[1]}: <b>{it.strLen}</b></li>
+					{/each}
+					</ul>
+					<hr />
+					Общий результат: {currentItog}
+				</div>
+			{:else}
+	{#if point}
+			<p class="standart">Вы уверены?</p>
+			<button class="start" on:click="set({calc:true})">Подтвердить выбор</button>
+	{:else}
+			<p class="standart">Кликните по карте в предпологаемом месте расположения объекта</p>
+	{/if}
+			{/if}
+		</div>
+{:elseif !layerGame}
+		<div class="center">
+			<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+		</div>
+{:else}
+		<div class="subcontent">
+		{#if sectionsList}
+			<h1 class="section">Рубрики</h1>
+			<ul class="selectSectionsList">
+			{#each Object.keys(sectionsList) as it}
+				<li><input on:change="checkSection(it, this.checked)" type="checkbox" checked/>{it}</li>
+			{/each}
+			</ul>
+			<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать игру</button>
+		{:else}
+			<div class="center"><div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div></div>
+		{/if}
+		</div>
 {/if}
+	</div>
+</div>
 
 <script>
 	const serverBase = window.serverBase || '//maps.kosmosnimki.ru/';
@@ -109,6 +114,7 @@
 				this.set({sectionsList: sectionsList});
 			},
 			start() {
+				this.set({quizList: 1});
 				this.nextQuestion(0, true);
 			},
 			nextQuestion(sc, clearCurrentScore) {
@@ -126,7 +132,7 @@
 					window.localStorage.setItem('_gameQuiz_', JSON.stringify(score));
 				}
 				if (clearCurrentScore) { currentScore = []; }
-				this.set({questions: questions, question: question, resultQuestion: false, currentScore: currentScore});
+				this.set({questions: questions, question: question, point: false, calc: false, resultQuestion: false, currentScore: currentScore});
 			}
 		},
 
@@ -147,8 +153,16 @@
 
 <style>
 .question {
-	position: absolute;
+	font-style: normal;
+	font-weight: bold;
+	line-height: normal;
+	font-size: 21px;
+
+	color: #5C7080;
+
     margin: 10px;
+	/*
+	position: absolute;
     right: 0;
     top: 0;
 	z-index: 1000;
@@ -156,7 +170,13 @@
 	padding: 13px;
 	border-radius: 5px;
 	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
-	font-weight: bold;
+	font-weight: bold;*/
+}
+.standart {
+	font-style: normal;
+	font-weight: normal;
+	line-height: normal;
+	font-size: 14px;
 }
 .question li {
 	font-weight: initial;
@@ -166,7 +186,7 @@
 	z-index: 1000;
 	position: absolute;
 	width: 410px;
-	height: 501px;
+	padding-bottom: 26px;
 	left: 10px;
 	top: 10px;
 
@@ -174,7 +194,7 @@
 	box-sizing: border-box;
 	border-radius: 10px;
 }
-.controls .title {
+.controls .bg {
 	width: 410px;
 	height: 150px;
 	text-align: center;
@@ -190,7 +210,7 @@
 }
 .controls .title button {
     position: relative;
-	top: 90px;
+	top: 100px;
 	background-color: #CED9E0;
 	border: 1px solid #CED9E0;
 	box-sizing: border-box;
@@ -216,7 +236,21 @@
 	font-size: 16px;
 	text-align: center;
 }
+.center {
+    text-align: center;
+}
+.emotionScore {
+	font-size: 20px;
+}
+.emotion {
+	margin: 10px;
+	font-style: normal;
+	font-weight: 800;
+	line-height: normal;
+	font-size: 16px;
 
+	color: #47E320;
+}
 .selectQuiz {
 	cursor: pointer;
 }

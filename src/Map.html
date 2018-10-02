@@ -1,7 +1,6 @@
 <div id="map"></div>
 
 <style>
-
 </style>
 
 <script>
@@ -97,9 +96,34 @@
 				let geoJson = polyline.toGeoJSON().geometry;
 
 				this.polyline = polyline;
-				this.setPopupContent(geoJson, isContains);
+				let len = L.gmxUtil.geoJSONGetLength(geoJson),
+					strLen = L.gmxUtil.getGeoJSONSummary(geoJson),
+					resultQuestion = {},
+					sc = 0,
+					emotion;
+				if (isContains) {
+					sc = 10;
+					emotion = {title: 'ВАУ, КРУТО!', score: strLen};
+					// txt.innerHTML = 'Отлично вам начислено: <b>' + sc + '</b> баллов';
+					resultQuestion.ok = sc + ' баллов';
+					if (this.audioStarted) this.audio.stop(0);
+					this.audioStart(11.74689342403628, 3.82984126984127);
+					// this.audioStart(11.182312925170066, 0.31458049886621314);
+				} else {
+					emotion = {title: 'НАДО БЫ ТОЧНЕЕ', score: strLen};
+					// txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
+					// this.audioStart(7.158798185941043, 0.20521541950113378);
+					this.audioStart(8.50453514739229, 0.20950113378684806);
+					
+				}
+				resultQuestion.question = question;
+				resultQuestion.len = len;
+				resultQuestion.strLen = strLen;
+				this.set({resultQuestion: resultQuestion, emotion: emotion});
 
-				console.log('showQuestionResult', this.song);
+				// this.setPopupContent(geoJson, isContains);
+
+				// console.log('showQuestionResult', this.song);
 			},
 			nextQuestion() {
 				this.map.closePopup();
@@ -148,13 +172,13 @@
 				this.popupContent = node;
 			},
 			clickMap(ev) {
-				this.map.closePopup();
+				if (this.marker) {
+					this.map.removeLayer(this.marker);
+				}
 				this._latlng = ev.latlng;
-				this.popup = L.popup()
-					.setLatLng(this._latlng);
-
-				this.setPopupContent();
-				this.map.openPopup(this.popup);
+				this.marker = L.marker(this._latlng, {icon: L.divIcon({className: 'my-div-icon', iconSize: [4, 4], iconAnchor:[10, 10]})}).addTo(this.map);
+				
+				this.set({point: true});
 			},
 			audioStart(start, duration) {
 				if (this.sound) {
@@ -251,18 +275,20 @@
 		onstate({ changed, current, previous }) {
 			// console.log('in onstate', this);
 			if (changed.selectQuiz && current.selectQuiz) {
-				this.map.closePopup();
+				if (this.marker) { this.map.removeLayer(this.marker); this.marker = null; }
 				if (this.polyline) { this.map.removeLayer(this.polyline); this.polyline = null; }
 				this.set({quizList: this.quizList});
 			} else if (changed.layerID && current.layerID) {
 				this.setLayerGame(current.layerID);
 			} else if (changed.question && current.question) {
 				let {layerGame} = this.get();
-				this.map.closePopup();
+				if (this.marker) { this.map.removeLayer(this.marker); this.marker = null; }
 				if (this.polyline) { this.map.removeLayer(this.polyline); this.polyline = null; }
 				this.map.setZoom(layerGame._gameZoom);
 			} else if (changed.sectionsList && current.sectionsList) {
 				this.reBuildQuestions(current.sectionsList);
+			} else if (changed.calc && current.calc) {
+				this.showQuestionResult();
 			}
 		}
 	}
