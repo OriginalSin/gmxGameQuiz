@@ -210,6 +210,7 @@
 				}).on('click', this.clickMap.bind(this), this);
 
 				// map.gmxControlsManager.init();
+				map.zoomControl.setPosition('bottomright');
 				
 				let arr = [];
 				L.gmx.loadMap(mapID, {leafletMap: map}).then(function(gmxMap) {

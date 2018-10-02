@@ -41,30 +41,34 @@
 	{:elseif !layerGame}
 		<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
 	{:else}
-		<h1 class="title">{props.title}</h1>
-		<p class="description">{props.description}</p>
-		{#if sectionsList}
-			<h1 class="title">Выбор рубрик</h1>
-			<ul class="selectSectionsList">
-			{#each Object.keys(sectionsList) as it}
-				<li><input on:change="checkSection(it, this.checked)" type="checkbox" checked/>{it}</li>
-			{/each}
-			</ul>
-		{/if}
-		<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать</button>
-		{#if !sectionsList}
-			<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
-		{/if}
-		{#if props.MetaProperties.video && props.MetaProperties.video.Value}
-			<div><iframe title="video" width="100%" height="315" src="{props.MetaProperties.video.Value}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
-		{/if}
-		{#if score[props.name]}
-			<ul>
-			{#each score[props.name] as it}
-			<li>{it} баллов</li>
-			{/each}
-			</ul>
-		{/if}
+		<div class="title">
+			<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать игру заново</button>
+		</div>
+		<div class="content">
+			<p class="description">{props.description}</p>
+			{#if sectionsList}
+				<h1 class="section">Рубрики</h1>
+				<ul class="selectSectionsList">
+				{#each Object.keys(sectionsList) as it}
+					<li><input on:change="checkSection(it, this.checked)" type="checkbox" checked/>{it}</li>
+				{/each}
+				</ul>
+			{/if}
+			<button class="start" disabled="{isSectionsEmpty}" on:click="start()">Начать игру</button>
+			{#if !sectionsList}
+				<button class="start" on:click="set({selectQuiz: true})">Выбрать другую игру</button>
+			{/if}
+			{#if props.MetaProperties.video && props.MetaProperties.video.Value}
+				<div><iframe title="video" width="100%" height="315" src="{props.MetaProperties.video.Value}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+			{/if}
+			{#if score[props.name]}
+				<ul>
+				{#each score[props.name] as it}
+				<li>{it} баллов</li>
+				{/each}
+				</ul>
+			{/if}
+		</div>
 	{/if}
 	</div>
 {/if}
@@ -159,17 +163,58 @@
     list-style-type: decimal;
 }
 .controls {
-	position: absolute;
-    margin: 80px;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
 	z-index: 1000;
-	background-color: #ffffff;
-	padding: 13px;
-	border-radius: 5px;
-	box-shadow: 0 1px 7px rgba(0,0,0,0.65);
+	position: absolute;
+	width: 410px;
+	height: 501px;
+	left: 10px;
+	top: 10px;
+
+	background: #FFFFFF;
+	box-sizing: border-box;
+	border-radius: 10px;
+}
+.controls .title {
+	width: 410px;
+	height: 150px;
+	text-align: center;
+
+	background-color: #0074E4;
+	background-image: url(./styles/strange.png);
+	background-position: 30px 30px;
+    background-repeat: no-repeat;
+	border-radius: 10px 10px 0px 0px;
+}
+.controls button {
+    cursor: pointer;
+}
+.controls .title button {
+    position: relative;
+	top: 90px;
+	background-color: #CED9E0;
+	border: 1px solid #CED9E0;
+	box-sizing: border-box;
+	border-radius: 10px;
+}
+.controls .content {
+    padding: 0px 20px;
+}
+.content button {
+    color: white;
+	background-color: #0074E4;
+	border: 1px solid #CED9E0;
+	box-sizing: border-box;
+	border-radius: 10px;
+
+	width: 255px;
+	height: 60px;
+
+/*	font-family: Montserrat;*/
+	font-style: normal;
+	font-weight: 500;
+	line-height: normal;
+	font-size: 16px;
+	text-align: center;
 }
 
 .selectQuiz {
