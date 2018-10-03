@@ -32,7 +32,7 @@
 		<button class="start" disabled="{isSectionsEmpty}" on:click="set({quizList: null, layerID: '124D910DFC294C03A882F8FBCE1AC4E4'})">Давайте проверим!</button>
 {:elseif question}
 		<div class="question">
-			{question ? question.properties[1] : ''}
+			{question ? question.properties[1] : ''}?
 			{#if resultQuestion}
 				<div class="emotion">
 					<span class="emotionTitle" style="color: {emotion.color}">{emotion.title}</span>
