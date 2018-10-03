@@ -45,17 +45,18 @@
 					meta = props.MetaProperties,
 					count = meta.count ? Number(meta.count.Value) : 10,
 					attrIndexes = layerGame.getTileAttributeIndexes(),
-					arr = [];
-				this.allData.forEach(function(it) {
+					arr = [],
+					ids = {};
+				this.allData.sort(()=>Date.now()*Math.random()).forEach(function(it) {
 					let propsArr = it.properties,
+						id = propsArr[0],
 						key = propsArr[attrIndexes.section];
-					if (sectionsList[key]) {
+					if (!ids[id] && sectionsList[key]) {
 						arr.push(it);
+						ids[id] = true;
 					}
 				});
-				arr = arr.sort(Math.random).slice(0, count);
-				this.set({questions: arr, reBuildQuestions: false});
-// console.log('reBuildQuestions', this.allData.length, sectionsList, arr);
+				this.set({questions: arr.slice(0, count), reBuildQuestions: false});
 			},
 			setLayerGame(layerID) {
 				let layerGame = this.gmxMap.layersByID[layerID] ||
@@ -87,20 +88,35 @@
 			},
 			showQuestionResult(ev) {
 				if (this.polyline) { this.map.removeLayer(this.polyline); }
-				let {question} = this.get(),
+				let {question, emotions} = this.get(),
 					bounds = question.dataOption.bounds.toLatLngBounds(true),
 					center = bounds.getCenter(),
 					isContains = bounds.contains(this._latlng),
-					polyline = L.polyline([center, this._latlng], {color: 'red'}).addTo(this.map);
+					polyline = L.geodesic([[center, this._latlng]], {color: 'red'}).addTo(this.map);
+					// polyline = L.polyline([center, this._latlng], {color: 'red'}).addTo(this.map);
+
 				this.map.fitBounds(polyline.getBounds());
 				let geoJson = polyline.toGeoJSON().geometry;
 
 				this.polyline = polyline;
-				let len = L.gmxUtil.geoJSONGetLength(geoJson),
+				let lenKm = Math.round(L.gmxUtil.geoJSONGetLength(geoJson) / 1000),
 					strLen = L.gmxUtil.getGeoJSONSummary(geoJson),
 					resultQuestion = {},
 					sc = 0,
 					emotion;
+				for (let i = 0, c, p, len = emotions.emotion.length; i < len; i++) {
+					c = emotions.emotion[i];
+console.log('cccccc', lenKm, c);
+					//let it = emotions[i];
+					if (c.error > lenKm || i === len - 1) {
+						let it = i === len - 1 ? c : p || c;
+						emotion = {title: emotions.rank[it.rank], color: it.color, score: strLen};
+console.log('rr', lenKm, it, emotion);
+						break;
+					}
+					p = c;
+				}
+				
 				if (isContains) {
 					sc = 10;
 					emotion = {title: 'ВАУ, КРУТО!', score: strLen};
@@ -110,20 +126,20 @@
 					this.audioStart(11.74689342403628, 3.82984126984127);
 					// this.audioStart(11.182312925170066, 0.31458049886621314);
 				} else {
-					emotion = {title: 'НАДО БЫ ТОЧНЕЕ', score: strLen};
+					// emotion = {title: 'НАДО БЫ ТОЧНЕЕ', score: strLen};
 					// txt.innerHTML = 'Растояние от центра объекта:<br><b>' + strLen + '</b>';
 					// this.audioStart(7.158798185941043, 0.20521541950113378);
 					this.audioStart(8.50453514739229, 0.20950113378684806);
 					
 				}
 				resultQuestion.question = question;
-				resultQuestion.len = len;
+				resultQuestion.len = lenKm;
 				resultQuestion.strLen = strLen;
 				this.set({resultQuestion: resultQuestion, emotion: emotion});
 
 				// this.setPopupContent(geoJson, isContains);
 
-				// console.log('showQuestionResult', this.song);
+				console.log('showQuestionResult', lenKm, emotions);
 			},
 			nextQuestion() {
 				this.map.closePopup();

@@ -10,6 +10,7 @@
 	bind:point
 	bind:calc
 	bind:emotion
+	bind:emotions
 	bind:resultQuestion
 	bind:reBuildQuestions
 />
@@ -34,7 +35,7 @@
 			{question ? question.properties[1] : ''}
 			{#if resultQuestion}
 				<div class="emotion">
-					<span class="emotionTitle">{emotion.title}</span>
+					<span class="emotionTitle" style="color: {emotion.color}">{emotion.title}</span>
 					<span class="emotionScore">{emotion.score}</span>
 				</div>
 				<button class="start" on:click="nextQuestion()">Следующий вопрос</button>
@@ -88,6 +89,18 @@
 				urlParams: {},
 				quizList: null,
 				selectQuiz: null,
+				sectionsList: null,
+				layerID: '',
+				layerGame: false,
+				score: false,
+				questions: false,
+				question: false,
+				point: false,
+				calc: false,
+				emotion: false,
+				emotions: emotions,
+				resultQuestion: false,
+				reBuildQuestions: false,
 				props: {},
 				currentScore: [],
 				score: null
@@ -122,6 +135,8 @@
 			nextQuestion(sc, clearCurrentScore) {
 				let {questions, props, score, currentScore} = this.get(),
 					question = questions.shift();
+console.log('nextQuestion', questions.length, question);
+
 				this.sc = this.sc || 0;
 				this.sc += (sc || 0);
 				if (!question) {
