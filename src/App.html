@@ -11,6 +11,7 @@
 	bind:calc
 	bind:emotion
 	bind:resultQuestion
+	bind:reBuildQuestions
 />
 {#if !question}
 <div class="scrim"></div>
@@ -114,7 +115,8 @@
 				this.set({sectionsList: sectionsList});
 			},
 			start() {
-				this.set({quizList: 1});
+				//this.set({quizList: 1});
+				this.set({reBuildQuestions: true, quizList: null, layerID: '124D910DFC294C03A882F8FBCE1AC4E4'})
 				this.nextQuestion(0, true);
 			},
 			nextQuestion(sc, clearCurrentScore) {

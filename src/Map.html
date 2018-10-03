@@ -54,7 +54,7 @@
 					}
 				});
 				arr = arr.sort(Math.random).slice(0, count);
-				this.set({questions: arr});
+				this.set({questions: arr, reBuildQuestions: false});
 // console.log('reBuildQuestions', this.allData.length, sectionsList, arr);
 			},
 			setLayerGame(layerID) {
@@ -285,7 +285,7 @@
 				if (this.marker) { this.map.removeLayer(this.marker); this.marker = null; }
 				if (this.polyline) { this.map.removeLayer(this.polyline); this.polyline = null; }
 				this.map.setZoom(layerGame._gameZoom);
-			} else if (changed.sectionsList && current.sectionsList) {
+			} else if (current.reBuildQuestions || (changed.sectionsList && current.sectionsList)) {
 				this.reBuildQuestions(current.sectionsList);
 			} else if (changed.calc && current.calc) {
 				this.showQuestionResult();
