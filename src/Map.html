@@ -99,19 +99,20 @@
 				let geoJson = polyline.toGeoJSON().geometry;
 
 				this.polyline = polyline;
-				let lenKm = Math.round(L.gmxUtil.geoJSONGetLength(geoJson) / 1000),
+				let lenM = L.gmxUtil.geoJSONGetLength(geoJson),
+					lenKm = Math.round(lenM / 1000),
 					strLen = L.gmxUtil.getGeoJSONSummary(geoJson),
 					resultQuestion = {},
 					sc = 0,
 					emotion;
 				for (let i = 0, c, p, len = emotions.emotion.length; i < len; i++) {
 					c = emotions.emotion[i];
-console.log('cccccc', lenKm, c);
+// console.log('cccccc', lenKm, c);
 					//let it = emotions[i];
 					if (c.error > lenKm || i === len - 1) {
 						let it = i === len - 1 ? c : p || c;
 						emotion = {title: emotions.rank[it.rank], color: it.color, score: strLen};
-console.log('rr', lenKm, it, emotion);
+// console.log('rr', lenKm, it, emotion);
 						break;
 					}
 					p = c;
@@ -133,13 +134,13 @@ console.log('rr', lenKm, it, emotion);
 					
 				}
 				resultQuestion.question = question;
-				resultQuestion.len = lenKm;
+				resultQuestion.len = lenM;
 				resultQuestion.strLen = strLen;
 				this.set({resultQuestion: resultQuestion, emotion: emotion});
 
 				// this.setPopupContent(geoJson, isContains);
 
-				console.log('showQuestionResult', lenKm, emotions);
+				// console.log('showQuestionResult', lenKm, emotions);
 			},
 			nextQuestion() {
 				this.map.closePopup();
