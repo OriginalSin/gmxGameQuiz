@@ -89,11 +89,19 @@
 			showQuestionResult(ev) {
 				if (this.polyline) { this.map.removeLayer(this.polyline); }
 				let {question, emotions} = this.get(),
+					propsArr = question.properties,
+					layers = L.geoJSON(L.gmxUtil.geometryToGeoJSON(propsArr[propsArr.length - 1], true, true)).getLayers(),
+					closestLayer = L.GeometryUtil.closestLayer(this.map, layers, this._latlng),
+					closest = L.GeometryUtil.closest(this.map, closestLayer.layer, this._latlng, false),
+
 					bounds = question.dataOption.bounds.toLatLngBounds(true),
-					center = bounds.getCenter(),
+					// center = bounds.getCenter(),
 					isContains = bounds.contains(this._latlng),
-					polyline = L.geodesic([[center, this._latlng]], {color: 'red'}).addTo(this.map);
-					// polyline = L.polyline([center, this._latlng], {color: 'red'}).addTo(this.map);
+					// polyline = L.geodesic([[center, this._latlng]], {color: 'red'}).addTo(this.map);
+					
+					polyline = L.geodesic([[closest, this._latlng]], {color: 'red'}).addTo(this.map);
+// console.log('closest', closest, this._latlng);
+// this.map.addLayer(closestLayer.layer);
 
 				this.map.fitBounds(polyline.getBounds());
 				let geoJson = polyline.toGeoJSON().geometry;
@@ -120,7 +128,7 @@
 				
 				if (isContains) {
 					sc = 10;
-					emotion = {title: 'ВАУ, КРУТО!', score: strLen};
+					emotion = {title: 'ВАУ, КРУТО!', score: ''};
 					// txt.innerHTML = 'Отлично вам начислено: <b>' + sc + '</b> баллов';
 					resultQuestion.ok = sc + ' баллов';
 					if (this.audioStarted) this.audio.stop(0);
@@ -134,8 +142,8 @@
 					
 				}
 				resultQuestion.question = question;
-				resultQuestion.len = lenM;
-				resultQuestion.strLen = strLen;
+				resultQuestion.len = isContains ? 0 : lenM;
+				resultQuestion.strLen = isContains ? '0' : strLen;
 				this.set({resultQuestion: resultQuestion, emotion: emotion});
 
 				// this.setPopupContent(geoJson, isContains);
@@ -195,6 +203,7 @@
 				this._latlng = ev.latlng;
 				this.marker = L.marker(this._latlng, {icon: L.divIcon({className: 'my-div-icon', iconSize: [4, 4], iconAnchor:[10, 10]})}).addTo(this.map);
 				
+				// console.log('clickMap', this._latlng, ev.latlng);
 				this.set({point: true});
 			},
 			audioStart(start, duration) {
